@@ -1,5 +1,8 @@
 const express = require("express");
 const mysql = require("mysql");
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const config = require('./config.js');
 const PORT = process.env.PORT || 8888;
 const app = express();
 const endPointRoot = "/4537/termproject/API/v1";
@@ -19,7 +22,36 @@ app.use(function(req, res, next) {
 });
 
 app.post(endPointRoot + "/login", (req, res) => {
-    res.send("login successful");
+    req.on('data', function(data) {
+            data = data.toString('utf8');
+            let jsonObj = JSON.parse(data);
+            var sql;
+            if (jsonObj.admin) {
+                sql = "CALL sp_adminLogin('" + jsonObj.user + "','"+ jsonObj.password + "');" 
+            } else {
+                sql = "CALL sp_studentLogin('" + jsonObj.user + "','"+ jsonObj.password + "');" 
+            }
+            connection.query(sql, function (err, result) {
+                if (err) {
+                    throw err;
+                }
+                // Reassign result to the RowDataPacket coming in from query
+                result = result[0][0];
+                if(result.valid == 1){
+                    let token = jwt.sign({
+                        id: result.id,
+                        admin: jsonObj.admin
+                    }, 
+                    config.secret,
+                    {
+                        expiresIn: 86400
+                    });
+                    res.status(200).send({auth: true, token: token});
+                } else {
+                    res.status(401).send({auth: false});
+                }
+            });    
+    });
 });
 
 app.route(endPointRoot + '/courses')
