@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<head>
+    <title>Admin Home Page</title>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/adminHome.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div class="container">
+        <div>
+            <p id="msg"></p>
+        </div>
+        <div id = "content">
+            <h1>Administrator Landing Page</h1>
+            <br>
+            <form action="admin/createCourse.html" method="get">
+                <button>Create Course</button>
+            </form>
+            <br>
+            <form action="admin/removeCourse.html" method="get">
+                <button>Remove Course</button>
+            </form>
+            <br>
+            <form action="admin/updateCourse.html" method="get">
+                <button>Update Course</button>
+            </form>
+            <br>
+            <form action="admin/dropStudent.html" method="get">
+                <button>Drop Student</button>
+            </form>
+            <br>
+            
+            <form action="./admin.html" method="get">
+                <button onclick="logout();">Logout</button>
+            </form>
+            <br>
+            <div class="table-responsive-sm">
+                <table class="table table-sm" id="apiHits">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th scope="col">Hits</th>
+                            <th scope="col">Method</th>
+                            <th scope="col">Path</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="js/adminHome.js"></script>
+</body>

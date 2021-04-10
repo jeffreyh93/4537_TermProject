@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<head>
+    <title>Student Home Page</title>
+    
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/studentHome.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div class="container">
+        <div>
+            <p id="msg"></p>
+        </div>
+        <div id = "content">
+            <h1>Student Landing Page</h1>
+            <br>
+            <form action="student/registerCourse.html" method="get">
+                <button>Register for Course</button>
+            </form>
+            <br>
+            <form action="student/updateDetails.html" method="get">
+                <button>Update Details</button>
+            </form>
+            <br>
+            <form action="./student.html" method="get">
+                <button onclick="logout();">Logout</button>
+            </form>
+            <br>
+        </div>
+    </div>
+    <script src="js/studentHome.js"></script>
+</body>
