@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<head>
+    <title>Course Form</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/courseForm.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+    <div class="container">
+        <div>
+            <p id="msg"></p>
+        </div>
+        <div id="content">
+            <h3>Please Provide New Course Details:</h3>
+            <br>
+            <div id = "courses"></div>
+            <form class="form-horizontal">
+                <div class="form-group">
+                    <label class="control-label col-sm-4" for="courseName">Course Description:</label>
+                    <div class="col-sm-12">
+                      <input type="text" class="form-control" id="courseDesc" placeholder="Course Name (ex. Developing Websites: 4 dummies)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-sm-4" for="courseName">Course Name:</label>
+                    <div class="col-sm-12">
+                      <input type="text" class="form-control" id="courseName" placeholder="Course Name (ex. COMP4537)">
+                    </div>
+                </div>
+                <div class="weekDays-selector">
+                    <label class="control-label col-sm-4">Lecture Days:</label>
+                    <input type="checkbox" id="weekday-mon" class="weekday" onclick='addDay(0)'/>
+                    <label for="weekday-mon">Mon</label>
+                    <input type="checkbox" id="weekday-tue" class="weekday" onclick='addDay(1)' />
+                    <label for="weekday-tue">Tue</label>
+                    <input type="checkbox" id="weekday-wed" class="weekday" onclick='addDay(2)' />
+                    <label for="weekday-wed">Wed</label>
+                    <input type="checkbox" id="weekday-thu" class="weekday" onclick='addDay(3)' />
+                    <label for="weekday-thu">Thu</label>
+                    <input type="checkbox" id="weekday-fri" class="weekday" onclick='addDay(4)' />
+                    <label for="weekday-fri">Fri</label>
+                </div>
+                <div id="timePicker"></div>
+                <br>
+                <button type="button" onclick="updateCourse()">Update</button>
+                <button type="button" onclick="back()">Back</button>
+            </form>
+            <br>
+        </div>
+    </div>
+    <script src="../js/courseForm.js"></script>
+</body>

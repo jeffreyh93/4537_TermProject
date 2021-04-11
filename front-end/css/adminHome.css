@@ -1,0 +1,12 @@
+#msg {
+    padding-top: 10px;
+}
+#content {
+    display: none;
+}
+.container {
+    margin: auto;
+    text-align: center;
+    border: 3px solid black;
+    width: 100%;
+}
