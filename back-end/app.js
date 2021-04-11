@@ -55,13 +55,64 @@ app.post(endPointRoot + "/login", (req, res) => {
                     {
                         expiresIn: 86400
                     });
-                    res.status(200).send({auth: true, token: token});
+                    res.status(200).send({auth: true, token: token, message: "authorization successful"});
                 } else {
-                    res.status(401).send({auth: false});
+                    res.status(401).send({auth: false、token: null, message: "invalid credentials"});
                 }
             });    
     });
 });
+
+app.route(endPointRoot + '/courses')
+    .get(function (req, res) {
+        let sql = "CALL sp_getAllCourses();";
+        connection.query(sql, function (err, result) {
+            if (err) {
+                res.status(400).send({status: "FAIL", message: "DB error, could not grab course data: " + err});
+            }
+            res.status(200).send({status: "OK", message: "grabbed course data successfully", data: result[0]});
+        });
+    })
+
+    .post(function (req, res) {
+        let token = req.headers['admin-token'];
+        if(!token) {
+            return res.status(401).send({auth: false, status: "FAIL", message: "No token was provided, a token is needed to perform this request"});
+        }
+        req.on('data', function(data) {
+            data = data.toString('utf8');
+            let jsonObj = JSON.parse(data);
+
+            // verify admin token
+            jwt.verify(token, config.secret, function(err, decoded) {
+                if (err) {
+                    return res.status(500).send({auth: false, status: "FAIL", message: "Failed to authenticate this token!"});
+                }
+                if (!decoded.admin) {
+                    return res.status(401).send({auth: false, status: "FAIL", message: "User is not authorized to perform this request: Not an admin!"});
+                }
+                let sql = `CALL sp_createCourse(${decoded.id}, '${jsonObj.name} ', '${jsonObj.shortName}');`;
+                connection.query(sql, function (err, result) {
+                    if (err) {
+                        throw err;
+                    }
+                    // Reassign result to the RowDataPacket coming in from query
+                    result = result[0][0];
+
+                    // iterate over lecture times and add each lecture times to DB individually
+                    jsonObj.lectureTimes.forEach((x) => {
+                        sql = `CALL sp_createCourseTimeslot(${result.courseid}, '${x.day}', '${x.startTime}', '${x.endTime}');`;
+                        connection.query(sql, function(err, result) {
+                            if (err) {
+                                res.status(500).send({auth: true, status: "FAIL", message: "DB err: " + err});
+                            }
+                        })
+                    });
+                    res.status(200).send({auth: true, status: "OK", message: "Sucessfully created course"});
+                });    
+            });
+        });
+    })
 
 app.route(endPointRoot + '/courses/:courseId')
     .get(function (req, res){
@@ -90,11 +141,11 @@ app.route(endPointRoot + '/courses/:courseId')
                     let lectureObj = {day: lectureTime.Day, startTime: lectureTime.StartTime, endTime: lectureTime.EndTime};
                     obj.lectureTimes.push(lectureObj);
                 });
-                res.status(200).send({status: "OK", data: obj});
+                res.status(200).send({status: "OK", message: "success!",  data: obj});
             });
         })
         .catch((err) => {
-            res.status(400).send({status: "FAIL", message: "Error: " + err});
+            res.status(500).send({status: "FAIL", message: "Error: " + err});
         });
     })
     
@@ -105,7 +156,7 @@ app.route(endPointRoot + '/courses/:courseId')
         }
         jwt.verify(token, config.secret, function(err, decoded) {
             if (err) {
-                return res.status(500).send({auth: false, message: "Failed toauthenticate this token!"});
+                return res.status(500).send({auth: false, message: "Failed to authenticate this token!"});
             }
             if (!decoded.admin) {
                 return res.status(401).send({auth: false, message: "User is not authorized to perform this request: Not an admin!"});
@@ -116,7 +167,7 @@ app.route(endPointRoot + '/courses/:courseId')
             if (err) {
                 throw err;
             }
-            res.status(200).send({status: "OK", message: "course successfully deleted"});
+            res.status(200).send({auth: true, status: "OK", message: "course successfully deleted"});
         });
     })
     
@@ -169,61 +220,7 @@ app.route(endPointRoot + '/courses/:courseId')
                 res.status(200).send({auth: true, status: "OK", message: "Sucessfully updated course"});
             });
         });
-
-
     });
-
-
-app.route(endPointRoot + '/courses')
-    .get(function (req, res) {
-        let sql = "CALL sp_getAllCourses();";
-        connection.query(sql, function (err, result) {
-            if (err) {
-                res.status(400).send({status: "FAIL", message: "Unknown error, could not grab course data"});
-            }
-            res.status(200).send({status: "OK", data: result[0]});
-        });
-    })
-
-    .post(function (req, res) {
-        let token = req.headers['admin-token'];
-        if(!token) {
-            return res.status(401).send({auth: false, message: "No token was provided, a token is needed to perform this request"});
-        }
-        req.on('data', function(data) {
-            data = data.toString('utf8');
-            let jsonObj = JSON.parse(data);
-
-            // verify admin token
-            jwt.verify(token, config.secret, function(err, decoded) {
-                if (err) {
-                    return res.status(500).send({auth: false, status: "FAIL", message: "Failed to authenticate this token!"});
-                }
-                if (!decoded.admin) {
-                    return res.status(401).send({auth: false, status: "FAIL", message: "User is not authorized to perform this request: Not an admin!"});
-                }
-                let sql = `CALL sp_createCourse(${decoded.id}, '${jsonObj.name} ', '${jsonObj.shortName}');`;
-                connection.query(sql, function (err, result) {
-                    if (err) {
-                        throw err;
-                    }
-                    // Reassign result to the RowDataPacket coming in from query
-                    result = result[0][0];
-
-                    // iterate over lecture times and add each lecture times to DB individually
-                    jsonObj.lectureTimes.forEach((x) => {
-                        sql = `CALL sp_createCourseTimeslot(${result.courseid}, '${x.day}', '${x.startTime}', '${x.endTime}');`;
-                        connection.query(sql, function(err, result) {
-                            if (err) {
-                                res.status(500).send({auth: true, status: "FAIL", message: "DB err: " + err});
-                            }
-                        })
-                    });
-                    res.status(200).send({auth: true, status: "OK", message: "Sucessfully created course"});
-                });    
-            });
-        });
-    })
 
 app.post(endPointRoot + "/courses/students", (req, res) => {
     let token = req.headers['student-token'];
@@ -272,6 +269,30 @@ app.route(endPointRoot + "/courses/:courseId/students/")
             });
         })
     });
+    
+app.delete(endPointRoot + "/courses/:courseId/students/:studentId",(req, res) => {
+    let token = req.headers['admin-token'];
+    if(!token) {
+        return res.status(401).send({auth: false, status: "FAIL", message: "No token was provided, a token is needed to perform this request"});
+    }
+    jwt.verify(token, config.secret, function(err, decoded) {
+        if (err) {
+            return res.status(500).send({auth: false, status: "FAIL", message: "Failed to authenticate token: " + err});
+        }
+        if(!decoded.admin) {
+            return res.status(401).send({auth: false, status: "FAIL", message: "not authorized to perform this request. Admin privileges required"});
+        }
+        let sql = `CALL sp_removeStudentFromCourse(${req.params.courseId}, ${req.params.studentId});`;
+        connection.query(sql, function(err, result) {
+            if (err) {
+                return res.status(500).send({auth: true, status: "FAIL", message: "DB err: " + err});
+            }
+            return res.status(200).send({auth: true, status: "OK", message: "student successfully removed"
+            });
+        })
+    }); 
+});
+
 
 app.put(endPointRoot + "/students",  (req,res) => {
     let token = req.headers['student-token'];
@@ -297,43 +318,18 @@ app.put(endPointRoot + "/students",  (req,res) => {
     });
 });
     
-app.delete(endPointRoot + "/courses/:courseId/students/:studentId",(req, res) => {
-    let token = req.headers['admin-token'];
-    if(!token) {
-        return res.status(401).send({auth: false, status: "FAIL", message: "No token was provided, a token is needed to perform this request"});
-    }
-    jwt.verify(token, config.secret, function(err, decoded) {
-        if (err) {
-            return res.status(500).send({auth: false, status: "FAIL", message: "Failed to authenticate token: " + err});
-        }
-        if(!decoded.admin) {
-            return res.status(401).send({auth: false, status: "FAIL", message: "not authorized to perform this request. Admin privileges required"});
-        }
-        let sql = `CALL sp_removeStudentFromCourse(${req.params.courseId}, ${req.params.studentId});`;
+app.post(endPointRoot + "/apiRegister", (req,res) => {
+    req.on('data', function(data) {
+        data = data.toString('utf8'); 
+        let jsonObj = JSON.parse(data);
+        let hashedPass = bcrypt.hashSync(jsonObj.password, 12);
+        let sql = `CALL sp_registerApiAdmin('${jsonObj.user}', '${hashedPass}');`;
         connection.query(sql, function(err, result) {
             if (err) {
-                return res.status(500).send({auth: true, status: "FAIL", message: "DB err: " + err});
+                return res.status(500).send({status: "FAIL", message: "DB err: "  + err});
             }
-            return res.status(200).send({auth: true, status: "OK", message: "student successfully removed"
-            });
-        })
-    }); 
-});
-
-app.get(endPointRoot + "/apistats", (req, res) => {
-    let sql = `CALL sp_getApiStats();`;
-    let token = req.headers['admin-token'];
-    jwt.verify(token, config.secret, function(err, decoded) {
-        if (err) {
-            return res.status(500).send({auth: false, message: "Failed toauthenticate this token!"});
-        }
-    });
-
-    connection.query(sql, function(err, result) {
-        if (err) {
-            return res.status(500).send({auth: true, status: "FAIL", message: "DB err: " + err});
-        }
-        return res.status(200).send({auth: true, status: "OK", data: result[0]});
+            return res.status(201).send({status: "OK", message: "registration successful"});
+        });
     })
 })
 
@@ -359,21 +355,24 @@ app.post(endPointRoot + "/apiLogin", (req,res) => {
     });
 })
 
-app.post(endPointRoot + "/apiRegister", (req,res) => {
-    req.on('data', function(data) {
-        data = data.toString('utf8'); 
-        let jsonObj = JSON.parse(data);
-        let hashedPass = bcrypt.hashSync(jsonObj.password, 12);
-        let sql = `CALL sp_registerApiAdmin('${jsonObj.user}', '${hashedPass}');`;
-        connection.query(sql, function(err, result) {
-            if (err) {
-                return res.status(500).send({status: "FAIL", message: "DB err: "  + err});
-            }
-            return res.status(200).send({status: "OK", message: "registration successful"});
-        });
-        
+app.get(endPointRoot + "/apistats", (req, res) => {
+    let sql = `CALL sp_getApiStats();`;
+    let token = req.headers['admin-token'];
+    jwt.verify(token, config.secret, function(err, decoded) {
+        if (err) {
+            return res.status(500).send({auth: false, message: "Failed toauthenticate this token!"});
+        }
+    });
+
+    connection.query(sql, function(err, result) {
+        if (err) {
+            return res.status(500).send({auth: true, status: "FAIL", message: "DB err: " + err});
+        }
+        return res.status(200).send({auth: true, status: "OK", data: result[0]});
     })
 })
+
+
 
 app.listen(PORT, (err) => {
     console.log("listening to port", PORT);
