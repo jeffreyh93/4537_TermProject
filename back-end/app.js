@@ -5,14 +5,14 @@ const bcrypt = require('bcryptjs');
 const config = require('./config.js');
 const url = require('url');
 const PORT = process.env.PORT || 8888;
-const app = express();
+const dotenv = require('dotenv').config();
 const endPointRoot = "/4537/termproject/API/v1";
 
 const connection = mysql.createConnection({
-    host: "localhost",
-    user: "slokme_d3l_master",
-    password: "Desire3Learn",
-    database: "slokme_d3l"
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE
 });
 
 app.use(function(req, res, next) {
@@ -32,7 +32,6 @@ app.post(endPointRoot + "/login", (req, res) => {
     req.on('data', function(data) {
             data = data.toString('utf8');
             let jsonObj = JSON.parse(data);
-            console.log(jsonObj);
             var sql;
             if (jsonObj.admin) {
                 sql = `CALL sp_adminLogin('${jsonObj.user}','${jsonObj.password}');` 
